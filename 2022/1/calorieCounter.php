@@ -1,6 +1,5 @@
 <?php
-$input = "input.txt";
-$elfFile = file($input) or die("Unable to open inventory!");
+$elfFile = file("input.txt") or die("Unable to open inventory!");
 
 // make the expedition
 $elf = [
