@@ -26,13 +26,13 @@ function XYZToScore($abc)
 {
     switch ($abc) {
         case 'X':
-            $returner = 1;
+            $returner = 0;
             break;
         case 'Y':
-            $returner = 2;
+            $returner = 3;
             break;
         case 'Z':
-            $returner = 3;
+            $returner = 6;
             break;
         default:
             $returner = 0;
@@ -66,26 +66,28 @@ function scoreRound($theirs, $mine)
     if ($theirs == $mine) {
         return 3;
     }
-    $adder = 0;
-    switch ($mine) {
-            //rock
-        case 1:
-            $multiplier = 6;
-            break;
-            // paper
-        case 2:
-            $multiplier = -3;
-            break;
-            // scissors
-        case 3:
-            $adder = 3;
-            $multiplier = 6;
-            break;
-        default:
-            $multiplier = 0;
-            break;
-    }
-    return ($theirs - $mine - 1 + $adder) * $multiplier;
+    // $adder = 0;
+    // switch ($mine) {
+    //         //rock
+    //     case 1:
+    //         $multiplier = 6;
+    //         break;
+    //         // paper
+    //     case 2:
+    //         $multiplier = -3;
+    //         break;
+    //         // scissors
+    //     case 3:
+    //         $adder = 3;
+    //         $multiplier = 6;
+    //         break;
+    //     default:
+    //         $multiplier = 0;
+    //         break;
+    // }
+    // return ($theirs - $mine - 1 + $adder) * $multiplier;
+    return 6 * ($theirs % (1 + ($mine % 3)));
+    //$score/6  =  $theirs % (1 + ($mine % 3))
 }
 
 function getMine($theirs, $score)
@@ -93,21 +95,37 @@ function getMine($theirs, $score)
     if ($score) {
         return $theirs;
     }
+
+    return ($theirs + 1 + ($score / 6)) % 3;
 }
 
 $cheatSheet = file("input.txt") or die("Unable to open the cheats!");
-$tournament = ["Good Score" => 0,"Bad Score" => 0, "Rounds" => []];
+$tournament = ["Good Score" => 0, "Bad Score" => 0, "Rounds" => []];
 
 foreach ($cheatSheet as $round) {
     $pattern = '{(?<theirs>[ABC]) (?<mine>[XYZ])}';
     preg_match($pattern, $round, $choice);
-    // print_r($choice);
     $theirChoice = badUnifyRPS($choice["theirs"]);
+
+    $roundScore = XYZToScore($choice["mine"]);
+    $myChoice = getMine($theirChoice, $roundScore);
+    $totalScore = $roundScore + $myChoice;
+
+
     $badMyChoice = badUnifyRPS($choice["mine"]);
     $badRoundScore =  scoreRound($theirChoice, $badMyChoice);
     $badTotalScore = $badRoundScore + $badMyChoice;
+
+
     $tournament["Rounds"][] = [
         "Theirs" => RPStoEnglish($theirChoice),
+        "Good" => [
+            "Mine" => RPStoEnglish($myChoice),
+            "Choice Score" => $myChoice,
+            "Round Score" => $roundScore,
+            "Total Score" => $totalScore
+        ],
+
         "Bad" => [
             "Mine" => RPStoEnglish($badMyChoice),
             "Choice Score" => $badMyChoice,
@@ -115,6 +133,7 @@ foreach ($cheatSheet as $round) {
             "Total Score" => $badTotalScore
         ]
     ];
+    $tournament["Good Score"] += $totalScore;
     $tournament["Bad Score"] += $badTotalScore;
 
     $tournamentJson = json_encode($tournament, JSON_PRETTY_PRINT);
